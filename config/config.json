@@ -1,0 +1,38 @@
+{
+    "test": {
+        "APPLICATION_URL": "https://google.com",
+        "DB": {
+            "USER": "postgres",
+            "PASSWORD": "",
+            "HOST": "127.0.0.1",
+            "PORT": "5432",
+            "DB_NAME": "language_paradise",
+            "DB_TYPE": "postgresql"
+        },
+        "EXAMPLE_DB_MYSQL": {
+            "USER": "root",
+            "PASSWORD": "root",
+            "HOST": "127.0.0.1",
+            "DB_NAME": "test",
+            "DB_TYPE": "mysql"
+        },
+        "EXAMPLE_DB_ORACLE": {
+            "USER": "root",
+            "PASSWORD": "root",
+            "HOST": "127.0.0.1",
+            "PORT": "5432",
+            "DB_NAME": "test",
+            "DB_TYPE": "oracle"
+        },
+        "EXAMPLE_DB_MSSQL": {
+            "USER": "root",
+            "PASSWORD": "root",
+            "DB_NAME": "test",
+            "DB_TYPE": "mysql"
+        },
+        "EXAMPLE_DB_SQLITE": {
+            "PATH": "C:\\path\\to\\foo.db",
+            "DB_TYPE": "sqlite"
+        }
+    }
+}
