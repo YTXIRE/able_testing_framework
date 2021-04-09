@@ -5,7 +5,7 @@ The framework includes modules for working with the UI, API, and database.
 
 The framework is based on pytest. Selene is responsible for working with the elements on the page. Working with the database is done via ORM via the SQLAlchemy package. API requests are sent via requests.
 
-#Getting started
+# Getting started
 
 1. Clone the repository to your local folder.
 2. Run the command:
