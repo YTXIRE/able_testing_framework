@@ -2,6 +2,9 @@
     "test": {
         "APPLICATION_URL": "https://google.com",
         "API_URL": "https://google.com",
+        "APPLICATION_TYPE": "uia",
+        "APPLICATION_PATH": "nodepad.exe",
+        "APPLICATION_TITLE": "App",
         "DB": {
             "USER": "postgres",
             "PASSWORD": "",

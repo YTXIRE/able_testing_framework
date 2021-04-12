@@ -2,10 +2,12 @@ from os import environ, getenv
 
 import pytest
 from selene.support.shared import config, browser as driver
+from pywinauto import Application
 
 from core.helpers import get_settings
 
 from pages.google_page import GooglePage
+from pages.edit_page import EditPage
 
 from models.language import Language
 
@@ -27,6 +29,27 @@ def get_environment():
 @pytest.fixture(scope='function')
 def google_page(browser):
     return GooglePage(browser)
+
+
+@pytest.fixture(scope='function')
+def application(get_environment):
+    return Application(backend=get_settings(environment=get_environment)['APPLICATION_TYPE'])\
+        .start(get_settings(environment=get_environment)['APPLICATION_PATH'])
+
+
+@pytest.fixture(scope='function')
+def window_app(application):
+    return application.window(title=get_settings(environment=get_environment)['APPLICATION_TITLE'])
+
+
+@pytest.fixture(scope='function')
+def edit_page(window_app):
+    return EditPage(window_app)
+
+
+@pytest.fixture(scope='function')
+def close_application(window_app):
+    yield window_app.close()
 
 
 @pytest.fixture(scope='function')
