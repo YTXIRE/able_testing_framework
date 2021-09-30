@@ -17,3 +17,6 @@ class API:
 
     def delete_data(self, environment):
         return delete(url=f'{self._base_url(environment)}/foo/bar')
+
+    def create_user(self, environment, data):
+        return post(url=f'{self._base_url(environment)}/users/create', data=data, verify=False)

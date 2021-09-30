@@ -17,4 +17,4 @@ class GooglePage(Elements):
 
     @step('Клик по кнопке поиска')
     def click_button(self):
-        self.button('[value="Поиск в Google"]').click()
+        self.input('[title="Поиск"]').press_enter()
