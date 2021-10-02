@@ -18,7 +18,7 @@ def browser(get_environment):
         "browserVersion": "94.0",
         "selenoid:options": {
             "enableVNC": True,
-            "enableVideo": False
+            "enableVideo": True
         }
     }
     config.browser_name = 'chrome'
