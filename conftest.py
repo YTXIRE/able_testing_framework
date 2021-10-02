@@ -3,6 +3,8 @@ from os import environ, getenv
 import pytest
 from selene.support.shared import config, browser as driver
 from selenium import webdriver
+from allure_commons._allure import attach
+from allure_commons.types import AttachmentType
 
 from core.helpers import get_settings
 
@@ -22,7 +24,8 @@ def browser(get_environment):
         }
     }
     config.browser_name = 'chrome'
-    config.driver = webdriver.Remote(command_executor='http://192.168.0.2:4444/wd/hub/', desired_capabilities=capabilities)
+    config.driver = webdriver.Remote(command_executor='http://192.168.0.2:4444/wd/hub/',
+                                     desired_capabilities=capabilities)
     config.base_url = get_settings(environment=get_environment)['APPLICATION_URL']
     return driver
 
@@ -36,6 +39,7 @@ def get_environment():
 
 @pytest.fixture(scope='function')
 def google_page(browser):
+    attach(config.driver.get_screenshot_as_png(), attachment_type=AttachmentType.PNG)
     return GooglePage(browser)
 
 
