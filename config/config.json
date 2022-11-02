@@ -2,6 +2,16 @@
     "test": {
         "APPLICATION_URL": "https://google.com",
         "API_URL": "https://crm.local/web",
+        "BROWSER_NAME": "chrome",
+        "BROWSER_WINDOW_WIDTH": 1920,
+        "BROWSER_WINDOW_HEIGHT": 1080,
+        "TIMEOUT": 30,
+        "SELENOID": {
+            "ENABLE_VNC": true,
+            "ENABLE_VIDEO": false,
+            "BROWSER_VERSION": "103.0",
+            "HUB": "http://selenoid/wd/hub"
+        },
         "DB": {
             "USER": "postgres",
             "PASSWORD": "",

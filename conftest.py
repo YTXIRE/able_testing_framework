@@ -1,104 +1,104 @@
-from os import environ, getenv
+from os import getenv
 
 import pytest
-from selene.support.shared import config, browser as driver
 from selenium import webdriver
-from allure_commons._allure import attach
-from allure_commons.types import AttachmentType
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import IEDriverManager
+from core.helpers import get_settings, get_fixtures, get_current_folder
+from selene.support.shared import config, browser as driver
 
-from core.helpers import get_settings
-
-from pages.google_page import GooglePage
-
-from models.language import Language
-
-
-@pytest.fixture(scope='module')
-def browser(get_environment):
-    capabilities = {
-        "browserName": "chrome",
-        "browserVersion": "94.0",
-        "selenoid:options": {
-            "enableVNC": True,
-            "enableVideo": True
-        }
-    }
-    config.browser_name = 'chrome'
-    config.driver = webdriver.Remote(command_executor='http://192.168.0.2:4444/wd/hub/',
-                                     desired_capabilities=capabilities)
-    config.base_url = get_settings(environment=get_environment)['APPLICATION_URL']
-    return driver
+mode = 'local'
+settings_config = {}
+pytest_plugins = get_fixtures()
 
 
-@pytest.fixture(scope='module')
-def get_environment():
-    if getenv('environment') is None:
-        environ['environment'] = 'test'
-    return getenv('environment')
+def pytest_sessionstart():
+    global settings_config
+    disable_warnings(InsecureRequestWarning)
+    settings_config = get_settings(environment=getenv('environment'))
 
 
-@pytest.fixture(scope='function')
-def google_page(browser):
-    attach(config.driver.get_screenshot_as_png(), attachment_type=AttachmentType.PNG)
-    return GooglePage(browser)
+def pytest_addoption(parser):
+    parser.addoption('--mode', action='store', default='local')
+    parser.addoption('--browser', action='store', default='chrome')
 
 
-@pytest.fixture(scope='function')
-def get_langs_ids(get_environment):
-    lang = Language()
-    ids_list = []
-    for lang in lang.get_lang(environment=get_environment):
-        ids_list.append(lang.id)
-    return ids_list
-
-
-@pytest.fixture(scope='function')
-def add_lang(get_environment):
-    new_lang = Language(
-        name='Ru',
-        iso_code='ru',
-        code='Ru',
-        voice_name='Ru'
-    )
-    new_lang.add_lang(environment=get_environment, query=new_lang)
-
-
-@pytest.fixture(scope='function')
-def add_langs(get_environment):
-    langs = []
-    lang = Language()
-    for item in range(1, 10):
-        langs.append(
-            Language(
-                name=item,
-                iso_code=item,
-                code=item,
-                voice_name=item
+def _create_driver_with_browser_name(*, browser_name='chrome', options):
+    match browser_name:
+        case 'firefox':
+            config.driver = webdriver.Firefox(
+                executable_path=GeckoDriverManager().install(),
+                options=options
             )
-        )
-    lang.add_langs(environment=get_environment, query=langs)
+        case 'ie':
+            config.driver = webdriver.Ie(
+                executable_path=IEDriverManager().install(),
+                options=options
+            )
+        case _:
+            config.driver = webdriver.Chrome(
+                executable_path=ChromeDriverManager().install(),
+                options=options
+            )
 
 
 @pytest.fixture(scope='function')
-def update_lang(get_environment):
-    lang = Language()
-    return lang.update_lang(environment=get_environment, condition={'id': 104}, update_value={'name': 'qwerty'})
+def browser(pytestconfig):
+    global mode
+    mode = pytestconfig.getoption('mode')
+    browser_name = pytestconfig.getoption('browser')
+    match browser_name:
+        case 'firefox':
+            options = webdriver.FirefoxOptions()
+            options.set_preference('browser.download.dir', get_current_folder(folder='files'))
+        case 'ie':
+            options = webdriver.IeOptions()
+        case _:
+            options = webdriver.ChromeOptions()
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            options.add_experimental_option('prefs', {
+                'profile.default_content_setting_values.notifications': 1,
+                'download.default_directory': get_current_folder(folder='files')
+            })
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--ignore-certificate-errors-spki-list')
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--ignore-ssl-errors=yes')
+    options.add_argument('--allow-running-insecure-content')
+    settings_config['BROWSER_NAME'] = browser_name if browser_name != 'chrome' else settings_config['BROWSER_NAME']
+    match mode:
+        case 'selenoid':
+            capabilities = {
+                'browserName': settings_config['BROWSER_NAME'],
+                'browserVersion': settings_config['SELENOID']['BROWSER_VERSION'],
+                'selenoid:options': {
+                    'enableVNC': settings_config['SELENOID']['ENABLE_VNC'],
+                    'enableVideo': settings_config['SELENOID']['ENABLE_VIDEO']
+                }
+            }
+            config.driver = webdriver.Remote(
+                command_executor=settings_config['SELENOID']['HUB'],
+                desired_capabilities=capabilities,
+                options=options
+            )
+        case 'headless':
+            options.add_argument('--headless')
+            _create_driver_with_browser_name(browser_name=browser_name, options=options)
+        case _:
+            _create_driver_with_browser_name(browser_name=browser_name, options=options)
+    config.browser_name = settings_config['BROWSER_NAME']
+    config.window_width = settings_config['BROWSER_WINDOW_WIDTH']
+    config.window_height = settings_config['BROWSER_WINDOW_HEIGHT']
+    config.timeout = settings_config['TIMEOUT']
+    yield driver
+    driver.quit()
 
 
-@pytest.fixture(scope='function')
-def delete_lang(get_environment):
-    lang = Language()
-    lang.delete_lang(environment=get_environment, condition={'id': 104})
-
-
-@pytest.fixture(scope='function')
-def execute_lang(get_environment):
-    lang = Language()
-    return lang.execute_lang(environment=get_environment, query='SELECT * FROM languages')
-
-
-@pytest.fixture(scope='function')
-def get_lang_by_id(get_environment):
-    lang = Language()
-    print(lang.get_lang_by(environment=get_environment, condition={'name': '1'}))
-    return 1
+@pytest.fixture(scope='session')
+def base_url():
+    return settings_config['APPLICATION_URL']
