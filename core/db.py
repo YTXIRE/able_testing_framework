@@ -44,6 +44,8 @@ class DB:
                 )
             case 'sqlite':
                 return create_engine(f"sqlite:///{environment[name]['PATH']}")
+            case _:
+                return None
 
     def create_session(self, environment: dict, name: str) -> any:
         self.connection = self._connection(environment=environment, name=name)
