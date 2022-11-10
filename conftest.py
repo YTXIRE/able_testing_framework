@@ -8,7 +8,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 from core.helpers import get_settings, get_fixtures, get_current_folder
-from selene.support.shared import config, browser as driver
+from selene import browser as driver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.ie.service import Service
+from selene.managed import config
 
 mode = 'local'
 settings_config = {}
@@ -30,17 +34,17 @@ def _create_driver_with_browser_name(*, browser_name='chrome', options):
     match browser_name:
         case 'firefox':
             config.driver = webdriver.Firefox(
-                executable_path=GeckoDriverManager().install(),
+                serive=Service(GeckoDriverManager().install()),
                 options=options
             )
         case 'ie':
             config.driver = webdriver.Ie(
-                executable_path=IEDriverManager().install(),
+                serive=Service(IEDriverManager().install()),
                 options=options
             )
         case _:
             config.driver = webdriver.Chrome(
-                executable_path=ChromeDriverManager().install(),
+                serive=Service(ChromeDriverManager().install()),
                 options=options
             )
 
