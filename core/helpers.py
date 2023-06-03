@@ -1,38 +1,16 @@
 import json
-from os import walk, getcwd
+from os import getcwd, walk
 from os.path import join
 from pathlib import Path
 
-from pytest import PytestWarning
 
-
-def get_settings(*, environment: str) -> dict:
-    CONFIG_PATH = join(get_current_folder(folder='config'), 'config.json')
-    with open(CONFIG_PATH) as data:
-        config = json.load(data)
-    return config[environment]
-
-
-def get_current_folder(*, folder: str) -> str:
+def get_current_folder(folder: str) -> str:
     current = getcwd()
 
-    def find_folder(*, path: str | Path) -> str:
+    def find_folder(path: str or Path) -> str:
         for _, folders, _ in walk(path):
             if folder in folders:
                 return join(path, folder)
-        else:
-            return find_folder(path=Path(path).parent)
-
-    return find_folder(path=current)
-
-
-def get_file_path(*, filename: str) -> str:
-    current = getcwd()
-
-    def find_folder(*, path: str | Path) -> str:
-        for _, _, files in walk(path):
-            if filename in files:
-                return join(path, filename)
         else:
             return find_folder(path=Path(path).parent)
 
@@ -58,7 +36,7 @@ def asserts(actual_data: list, asserts_data: list):
                 if str(value).lower() in dict(actual_data[key]).keys() \
                         and str(value).lower() in dict(asserts_data[key]).keys():
                     assert actual_data[key][str(value).lower()] == asserts_data[key][str(value).lower()], \
-                        f'Не найден {str(value).lower()} в списке {item}'
+                        f'Not found {str(value).lower()} in list {item}'
         elif isinstance(asserts_data[item], dict):
             for data in asserts_data[item]:
                 assert actual_data[item][data] == asserts_data[item][data]
@@ -66,5 +44,14 @@ def asserts(actual_data: list, asserts_data: list):
             assert actual_data[item] == asserts_data[item]
 
 
-def check_url(*, url: str) -> bool:
-    return url.startswith('https://') | url.startswith('http://')
+def get_path_file_by_name(filename: str) -> str:
+    current = getcwd()
+
+    def find_file(path: str or Path) -> str:
+        for _, _, files in walk(path):
+            if filename in files:
+                return join(path, filename)
+        else:
+            return find_file(path=Path(path).parent)
+
+    return find_file(path=current)

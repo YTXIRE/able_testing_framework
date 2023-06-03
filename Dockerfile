@@ -1,37 +1,35 @@
-FROM python:3.11-alpine
+FROM ubuntu:22.04
 
-WORKDIR /app
+ENV TZ=Europe/Moscow
+ENV LANG ru_RU.UTF-8
+ENV LC_ALL ru_RU.UTF-8
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && apt-get install -y \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libwayland-client0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    xdg-utils \
-    libu2f-udev \
-    libvulkan1
+    curl unzip wget xvfb python3.10 python3-pip locales zip && \
+    sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales
 
-RUN curl -LO  https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
-RUN rm google-chrome-stable_current_amd64.deb
-RUN echo "Chrome: " && google-chrome --version
+# install google-chrome
+RUN CHROME_SETUP=google-chrome.deb && \
+    wget -qO $CHROME_SETUP "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" && \
+    apt install -y ./$CHROME_SETUP && \
+    rm $CHROME_SETUP
 
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install poetry==1.2.2
 
-COPY . .
-RUN chmod 777 /app
+# Configuring poetry
+RUN poetry config virtualenvs.create false
+
+# Copying requirements of a project
+COPY pyproject.toml poetry.lock /app/src/
+WORKDIR /app/src
+
+# Installing requirements
+RUN poetry install --no-interaction
+
+# Copying actuall application
+COPY . /app/src/
+
+CMD ["python3", "-m", "pytest", "--mode", "headless", "-v"]

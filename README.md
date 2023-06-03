@@ -1,16 +1,46 @@
-# Able Testing Framework 
-This product is a framework for implementing user interface tests.
+# Pytest - Автоматизация тестирования
 
-The framework includes modules for working with the UI, API, and database.
+## GibLab CI ➝ запуск автотестов
 
-The framework is based on pytest. Selene is responsible for working with the elements on the page. Working with the database is done via ORM via the SQLAlchemy package. API requests are sent via requests.
+To Be Continue => ...
 
-# Getting started
+## Метки:
 
-1. Clone the repository to your local folder.
-2. Run the command:
-``pip install -r requirements.txt``
-   
-The framework implements the Page Object method of operation. All the necessary elements are described in the components folder. The configuration file is located in the config folder. Core contains the logic for working with the database. The models folder includes custom methods for working with the database. The pages folder stores the classes written by page object. The tests folder contains the implemented tests. The conftest file contains auxiliary methods for running tests.
+`all` - запуск всех тестов
 
-This framework is distributed completely free of charge.
+`auth` - запуск всех тестов на авторизацию
+
+## Установка
+
+1. Склонировать проект к себе на локальный компьютер
+2. Установить зависимости командой `poetry install`
+
+## Запуск и использование
+
+Для запуска необходимо выполнить команду `pytest`. Если необходим запуск конкретного функционала, следует указать
+необходимую метку из раздела с метками.
+
+## Команды:
+
+Примеры команд с описанием:
+
+`pytest -n auto --reruns 2 --mode headless`
+
+`pytest` - локальный запуск всех авто-тестов
+
+`pytest -m dev` - локальный запуск авто-теста с меткой для разработки (добавить над названием функции
+авто-теста `@mark.dev` и сделать импорт `from pytest import mark`)
+
+`pytest -n 16` - локальный запуск всех авто-тестов в несколько потоков, где цифра определяет число потоков
+
+`pytest --mode selenoid` - запуск авто-тестов в `Selenoid`
+
+`pytest --reruns 2` - локальный запуск авто-тестов, а в случае падения авто-тест перезапустится, где цифра определяет
+максимальное количество перезапусков
+
+`pytest --headless` - запуск авто-тестов без визуализации, что позволяет сильно ускорить их время прохождения
+
+`pip install -r requirements.txt` - установка всех библиотек/пакетов и их зависимостей из файла `requirements.txt`
+`poetry install` - установка всех библиотек/пакетов и их зависимостей из файла `pyproject.toml`
+
+`flake8 .` - запуск статического анализатора кода (настраивается в файле `.flake8`)

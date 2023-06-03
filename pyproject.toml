@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "able-testing-framework"
+version = "1.0.0"
+description = ""
+authors = ["XIRE <mwde@bk.ru>"]
+readme = "README.md"
+packages = [{include = "able_testing_framework"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^7.3.1"
+allure-pytest = "^2.13.2"
+allure-python-commons = "^2.13.2"
+selene = {git = "https://github.com/yashaka/selene.git"}
+mimesis = "^10.1.0"
+pytest-xdist = "^3.3.1"
+pydantic = "^1.10.8"
+pytest-dotenv = "^0.5.2"
+requests = "^2.31.0"
+sqlalchemy = "^2.0.15"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+isort = "^5.12.0"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["."]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

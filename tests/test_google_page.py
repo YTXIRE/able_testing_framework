@@ -1,10 +1,15 @@
-from allure import title, description, suite
+from core.allure_wrapper import allure_wrapper
 
 
-@title('Проверка страницы поиска Google')
-@description('Проверка страницы поиска Google')
-@suite('Проверка страницы поиска Google')
-def test_google_search(google_page):
-    google_page.open()
-    google_page.fill_search_form('Тест')
-    google_page.click_button()
+class TestGoogleSearchPage:
+    @allure_wrapper(
+        allure_title="Checking the Google search page",
+        allure_suite="Checking the Google search page",
+        allure_parent_suite="Checking the Google search page",
+        test_case_id=1,
+    )
+    def test_google_search(self, google_page):
+        google_page.open()
+        google_page.fill_search_form('Тест')
+        google_page.click_button()
+        google_page.should_be_visible_results_search()

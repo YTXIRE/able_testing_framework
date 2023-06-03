@@ -1,13 +1,49 @@
-from os import getenv
-
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine, Column, ARRAY, BIGINT, BigInteger, BINARY, BLOB, Boolean, CHAR, CLOB, Date, \
-    DateTime, DECIMAL, Enum, Float, Integer, Interval, JSON, LargeBinary, NCHAR, Numeric, NVARCHAR, PickleType, REAL, \
-    SmallInteger, String, Text, Time, TIMESTAMP, TypeDecorator, Unicode, UnicodeText, VARBINARY, VARCHAR
-from sqlalchemy.dialects.oracle import RAW, VARCHAR2
-from sqlalchemy import inspect
+from typing import Any
 from urllib.parse import quote_plus as urlquote
+
+from sqlalchemy import (
+    ARRAY,
+    BIGINT,
+    BINARY,
+    BLOB,
+    CHAR,
+    CLOB,
+    DECIMAL,
+    JSON,
+    NCHAR,
+    NVARCHAR,
+    REAL,
+    TIMESTAMP,
+    VARBINARY,
+    VARCHAR,
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum,
+    Float,
+    Integer,
+    Interval,
+    LargeBinary,
+    Numeric,
+    PickleType,
+    SmallInteger,
+    String,
+    Text,
+    Time,
+    TypeDecorator,
+    Unicode,
+    UnicodeText,
+    create_engine,
+    inspect,
+)
+from sqlalchemy.dialects.oracle import RAW, VARCHAR2
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import text
+
+from config import settings_config
 
 BASE = declarative_base()
 
@@ -17,40 +53,40 @@ class DB:
         self.session = session
         self.connection = None
 
-    def _connection(self, *, environment: dict, name: str) -> create_engine:
-        environment[name]['USER'] = getenv(f"DB_USER_{name.upper()}")
-        environment[name]['PASSWORD'] = getenv(f"DB_PASSWORD_{name.upper()}")
-        db_name = environment[name]['DB_TYPE'].lower()
-        match db_name:
-            case 'postgresql':
-                return create_engine(
-                    f"postgresql://{environment[name]['USER']}:{urlquote(environment[name]['PASSWORD'])}@"
-                    f"{environment[name]['HOST']}:{environment[name]['PORT']}/{environment[name]['DB_NAME']}"
-                )
-            case 'mysql':
-                return create_engine(
-                    f"mysql://{environment[name]['USER']}:{urlquote(environment[name]['PASSWORD'])}@{environment[name]['HOST']}/"
-                    f"{environment[name]['DB_NAME']}"
-                )
-            case 'oracle':
-                return create_engine(
-                    f"oracle://{environment[name]['USER']}:{urlquote(environment[name]['PASSWORD'])}@{environment[name]['HOST']}:"
-                    f"{environment[name]['PORT']}/?service_name={environment[name]['DB_NAME']}&mode=2"
-                )
-            case 'mssql':
-                return create_engine(
-                    f"mssql+pyodbc://{environment[name]['USER']}:{urlquote(environment[name]['PASSWORD'])}@"
-                    f"{environment[name]['DB_NAME']}"
-                )
-            case 'sqlite':
-                return create_engine(f"sqlite:///{environment[name]['PATH']}")
-            case _:
-                return None
+    @staticmethod
+    def _connection() -> create_engine:
+        if settings_config.db.postgres.db_name == 'postgresql':
+            engine = create_engine(
+                f"postgresql://{settings_config.db.postgres.user}:{urlquote(settings_config.db.postgres.password)}@"
+                f"{settings_config.db.postgres.host}:{settings_config.db.postgres.port}/"
+                f"{settings_config.db.postgres.db_name}"
+            )
+        elif settings_config.db.mysql.db_name == 'mysql':
+            engine = create_engine(
+                f"mysql://{settings_config.db.mysql.user}:{urlquote(settings_config.db.mysql.password)}@"
+                f"{settings_config.db.mysql.host}/{settings_config.db.mysql.db_name}"
+            )
+        elif settings_config.db.oracle.db_name == 'oracle':
+            engine = create_engine(
+                f"oracle://{settings_config.db.oracle.user}:{urlquote(settings_config.db.oracle.password)}@"
+                f"{settings_config.db.oracle.host}:{settings_config.db.oracle.host}/"
+                f"?service_name={settings_config.db.oracle.db_name}&mode=2"
+            )
+        elif settings_config.db.mssql.db_name == 'mssql':
+            engine = create_engine(
+                f"mssql+pyodbc://{settings_config.db.mssql.user}:{urlquote(settings_config.db.mssql.password)}@"
+                f"{settings_config.db.mssql.db_name}"
+            )
+        elif settings_config.db.sqlite.db_name == 'sqlite':
+            engine = create_engine(f"sqlite:///{settings_config.db.sqlite.path}")
+        else:
+            engine = None
+        return engine
 
-    def create_session(self, environment: dict, name: str) -> any:
-        self.connection = self._connection(environment=environment, name=name)
+    def create_session(self) -> any:
+        self.connection = self._connection()
         Session = sessionmaker(self.connection)
-        if environment[name]['DB_TYPE'].lower() != 'postgresql':
+        if settings_config.db.postgres.db_name != 'postgresql':
             BASE.metadata.create_all(self.connection)
         return Session()
 
@@ -97,7 +133,7 @@ class DB:
 
     def update(self, table_name: any, condition: dict, update_value: dict) -> str | bool:
         try:
-            self.session.query(table_name).filter_by(**condition).update(update_value)
+            self.session.query(text(table_name)).filter_by(**condition).update(update_value)
             self.session.commit()
             return 'Successful updated'
         except BaseException as e:
@@ -115,18 +151,17 @@ class DB:
             self.session.rollback()
             return False
 
-    def execute(self, query: str) -> list | bool:
-        """
-            execute("SELECT * FROM user WHERE id=5")
-            :param query: str
-            :return:
-        """
+    def execute(self, query: str) -> None | list[Any] | bool:
         try:
-            result = self.session.execute(query)
+            result = self.session.execute(text(query))
             self.session.commit()
+            if query.lower().startswith("update"):
+                return
+            if query.lower().startswith("insert"):
+                return
             return [item for item in result]
-        except BaseException as e:
-            print('Error for execute method in DB:', e.args)
+        except BaseException as ex:
+            print('Error for execute method in DB:', ex)
             self.session.rollback()
             return False
 
@@ -159,18 +194,17 @@ class DB:
             print('Error for get_columns_by_filter method in DB:', e.args)
             return False
 
-    def get_by_id(self, table: any, row_id: int | str) -> dict | bool:
-        """
-        get row from DB by ID
-        :param table: table model
-        :param row_id: primary key
-        :return: row
-        """
+    def get_by_id(self, table: any, row_id: int or str):
         try:
             result = self.session.query(table).get(row_id)
-            return {c.key: getattr(result, c.key) for c in inspect(result).mapper.column_attrs}
+
+            def object_as_dict(obj):
+                return {c.key: getattr(obj, c.key)
+                        for c in inspect(obj).mapper.column_attrs}
+
+            return object_as_dict(result)
         except BaseException as e:
-            print('Error for get_by_id method in DB:', e.args)
+            print(e.args)
             return False
 
     def close(self):
